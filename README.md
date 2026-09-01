@@ -1,33 +1,82 @@
 # Unloque
 
-Ferramenta modular de alta performance para recuperação de senhas, auditoria criptográfica de arquivos ZIP e análise contextual de dicionários. Desenvolvido para fins de pesquisa em segurança e aplicações acadêmicas, o Unloque oferece interface de linha de comando (CLI) com telemetria em tempo real e interface gráfica web local (Web GUI) baseada em Flask com streaming via Server-Sent Events (SSE).
+<p align="center">
+  <strong>Ferramenta modular de alta performance para recuperação de senhas, auditoria criptográfica de arquivos ZIP e análise contextual de dicionários.</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python Version">
+  <img src="https://img.shields.io/badge/Flask-3.0+-000000?style=for-the-badge&logo=flask&logoColor=white" alt="Flask">
+  <img src="https://img.shields.io/badge/SSE-Real--Time-06B6D4?style=for-the-badge" alt="SSE Real-Time">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
+</p>
+
+---
+
+## Sumário
+
+- [Visão Geral](#visão-geral)
+- [Funcionalidades](#funcionalidades)
+- [Interface Gráfica Web (Web GUI)](#interface-gráfica-web-web-gui)
+- [Como Funciona - Aspectos Técnicos](#como-funciona---aspectos-técnicos)
+  - [1. Teoria da Quebra de Senhas em Arquivos ZIP](#1-teoria-da-quebra-de-senhas-em-arquivos-zip)
+  - [2. Formulação Matemática e Algoritmos](#2-formulação-matemática-e-algoritmos)
+- [Requisitos do Sistema](#requisitos-do-sistema)
+- [Instalação](#instalação)
+- [Guia de Utilização](#guia-de-utilização)
+  - [1. Modo Gráfico (Web GUI)](#1-modo-gráfico-web-gui)
+  - [2. Modo Linha de Comando (CLI)](#2-modo-linha-de-comando-cli)
+  - [3. Geração de Amostras ZIP de Teste](#3-geração-de-amostras-zip-de-teste)
+- [Testes Automatizados](#testes-automatizados)
+- [Estrutura do Repositório](#estrutura-do-repositório)
+- [Autores](#autores)
+- [Aviso Legal e Diretrizes Éticas](#aviso-legal-e-diretrizes-éticas)
+
+---
+
+## Visão Geral
+
+O **Unloque** é uma solução completa desenvolvida para fins de pesquisa em segurança da informação, auditoria de arquivos compactados e aplicações acadêmicas. O sistema integra um núcleo computacional multi-thread de alto rendimento com duas interfaces de operação:
+1. **Interface de Linha de Comando (CLI)**: Projetada para automação, pipelines e auditorias com telemetria direta no terminal.
+2. **Interface Gráfica Web (Web GUI)**: Painel SPA moderno construído com Flask e streaming de telemetria em tempo real via Server-Sent Events (SSE).
 
 ---
 
 ## Funcionalidades
 
-- **Motor Desacoplado Multi-Core**: Núcleo criptográfico puro em Python com paralelismo via `ThreadPoolExecutor` e processamento em lotes (_chunks_).
+- **Motor Criptográfico Multi-Core**: Paralelismo de threads (`ThreadPoolExecutor`) com processamento em lotes (_chunks_) e cancelamento atômico instantâneo.
 - **Suporte Criptográfico Abrangente**:
   - Suporte nativo a **ZipCrypto** (cifra de fluxo tradicional PKZIP).
   - Suporte a **WinZip AES** (AES-128, AES-192 e AES-256) via biblioteca `pyzipper` com fallback para utilitários de sistema (`unzip` / `7z`).
-- **Varredura Inteligente de Diretórios**: Suporte para carregar diretórios inteiros de wordlists (`wordlists/`), consolidando e desduplicando termos automaticamente.
-- **Interface de Linha de Comando (CLI)**:
-  - Execução direta com passagem de arquivo ZIP e dicionário padrão.
-  - Modo Detalhado (`-v` ou `--verbose`): Exibição sequencial das tentativas de senha.
-  - Controle de Cadência (`-d` ou `--delay`): Ajuste de intervalo entre testes para apresentações e demonstrações didáticas.
-  - Barra de progresso dinâmica em tempo real com indicador da senha atual.
-- **Interface Gráfica Web (Flask + SSE)**:
-  - Painel SPA com interface responsiva e moderna.
-  - Suporte a arrastar e soltar (_drag & drop_) de arquivos ZIP e seleção de listas.
-  - Telemetria contínua via Server-Sent Events (taxa de senhas/segundo, percentual, tempo decorrido e status).
-- **Utilitário de Testes e Amostras**: Script integrado para criação de arquivos ZIP cifrados com senhas parametrizáveis.
-- **Suíte de Testes Automatizados**: Cobertura de testes unitários para o motor criptográfico, inspeção de cabeçalhos e endpoints HTTP.
+- **Auditoria Criptográfica de Cabeçalhos (PKZIP Analyzer)**:
+  - Inspeção de assinaturas binárias, extração de metadados, identificação da cifra e avaliação do nível de vulnerabilidade estrutural.
+- **Profiler Contextual (Engenharia Social / OSINT)**:
+  - Gerador de wordlists direcionadas combinando nome, sobrenome, anos, datas e palavras-chave com regras de capitalização e remoção de acentuação.
+- **Mutador de Senhas**:
+  - Expansão léxica baseada em regras de leetspeak ($a \rightarrow 4/@, e \rightarrow 3, i \rightarrow 1, s \rightarrow 5/\$), sufixos, prefixos, anos correntes e inversão de caracteres.
+- **Varredura Inteligente de Diretórios**: Carregamento recursivo e desduplicação automática de múltiplos dicionários contidos na pasta `wordlists/`.
+- **Interface Gráfica Web (Web GUI)**:
+  - Painel responsivo em tema *Dark SecOps* com animações fluidas.
+  - Suporte completo a _drag & drop_ para arquivos ZIP e arquivos `.txt`.
+  - Telemetria contínua via Server-Sent Events (SSE): taxa de senhas por segundo, percentual, tempo decorrido, ETA e visualizador da senha testada em tempo real.
+  - Controles de execução: Iniciar, Pausar, Retomar e Parar.
+  - Terminal interativo com histórico de logs coloridos com timestamps.
+  - Modal comemorativo de recuperação com cópia da senha para a área de transferência em um clique.
+- **Suíte de Testes Automatizados**: Cobertura completa de testes unitários e de integração (`unittest`).
 
 ---
 
-## Aviso Legal
+## Interface Gráfica Web (Web GUI)
 
-Esta ferramenta foi desenvolvida estritamente para **fins educacionais e acadêmicos**. A utilização deste software para recuperação ou tentativa de acesso a arquivos sem a autorização prévia e expressa do proprietário é ilegal e contrária às normas éticas. Os autores não se responsabilizam por quaisquer danos ou utilizações indevidas decorrentes deste projeto.
+A Web GUI do Unloque organiza as operações em 5 módulos:
+
+| Aba | Descrição |
+| :--- | :--- |
+| **Recuperador (Cracker)** | Painel principal de ataque com seleção de alvos por drag & drop ou exemplos do servidor, configuração de workers, estratégias de wordlists e telemetria em tempo real. |
+| **Auditoria Criptográfica** | Inspeção detalhada de cabeçalhos PKZIP, tabela de arquivos internos (comprimido, descomprimido, CRC-32) e parecer técnico de segurança. |
+| **Profiler Contextual** | Gerador inteligente de dicionários para ataques direcionados baseados em dados de inteligência e perfil pessoal. |
+| **Mutador de Senhas** | Ferramenta de transformação léxica com filtros de leetspeak, sufixos e permutações de caixa. |
+| **Biblioteca & Exemplos** | Catálogo centralizado de wordlists e amostras ZIP protegidas para testes rápidos com um clique. |
 
 ---
 
@@ -35,10 +84,10 @@ Esta ferramenta foi desenvolvida estritamente para **fins educacionais e acadêm
 
 ### 1. Teoria da Quebra de Senhas em Arquivos ZIP
 
-O Unloque implementa um ataque de dicionário estruturado e inspeção de cabeçalhos contra arquivos ZIP:
+O Unloque implementa ataque estruturado por dicionário e inspeção de cabeçalhos binários:
 
 1. **Inspeção de Cabeçalhos Binários**:
-   - Análise das assinaturas do formato ZIP (Local File Header `0x04034b50` e Central Directory Header `0x02014b50`).
+   - Análise das assinaturas de formato ZIP (Local File Header `0x04034b50` e Central Directory Header `0x02014b50`).
    - Leitura da flag de propósito geral (_General Purpose Bit Flag_): o bit `0x0001` (bit 0) identifica a presença de criptografia.
    - Detecção de campos extras: a presença do identificador `0x9901` no cabeçalho extra especifica o uso de criptografia WinZip AES.
 2. **Processo de Verificação no ZipCrypto**:
@@ -47,9 +96,8 @@ O Unloque implementa um ataque de dicionário estruturado e inspeção de cabeç
 3. **Processo de Verificação no WinZip AES (128, 192 e 256 bits)**:
    - Utilização de PBKDF2-HMAC-SHA1 para derivação das chaves de criptografia e integridade.
    - Validação prévia dos 2 bytes de autenticação (_password verification value_) antes da decodificação do bloco de dados.
-   - Fallback de execução externa via comandos de sistema (`unzip -P` / `7z`) quando aplicável.
 4. **Processamento Concorrente em Lotes (_Chunking_)**:
-   - As entradas do dicionário são distribuídas em blocos entre múltiplos trabalhadores (_workers_) paralelos.
+   - As entradas do dicionário são distribuídas em lotes entre múltiplos trabalhadores (_workers_) paralelos.
    - Ao identificar a chave correta, um sinal atômico (`threading.Event`) interrompe imediatamente as demais tarefas em execução.
 
 ---
@@ -130,33 +178,35 @@ Onde $\epsilon$ representa a latência de escalonamento e troca de contexto entr
 - **ZipCrypto**: $t_{teste} \approx c_1 \cdot L + c_2$ (onde $L$ é o tamanho da senha e $c_1, c_2$ são constantes de ciclo de clock para operações CRC32).
 - **WinZip AES**: $t_{teste} \approx 1000 \times t_{\text{SHA1}} + c_3 \cdot \text{Rounds}_{AES}$, exigindo consideravelmente mais ciclos de processamento devido às 1.000 iterações de hashing criptográfico.
 
-#### E. Probabilidade de Sucesso
-
-A probabilidade de sucesso do ataque por dicionário é modelada pela razão entre o espaço amostral do dicionário ($D$) e o espaço de escolhas do usuário ($S_{alvo}$):
-$$P(\text{sucesso}) = \frac{|D \cap S_{alvo}|}{|S_{alvo}|}$$
-
-Dicionários contextuais e especializados reduzem o espaço de busca e maximizam a probabilidade de convergência em menor tempo computacional.
-
 ---
 
 ## Requisitos do Sistema
 
 - **Interpretador**: Python 3.8 ou superior.
-- **Sistemas Operacionais**: Linux, macOS ou Windows (WSL2 / nativo).
+- **Sistemas Operacionais**: Linux, macOS ou Windows (Nativo ou WSL2).
+- **Navegador Moderno**: Chrome, Firefox, Edge, Safari ou Brave (para a Web GUI).
 - **Dependências Python**:
   - `Flask >= 3.0.0`
   - `pyzipper >= 0.3.6`
+  - `Werkzeug >= 3.0.0`
 
 ---
 
 ## Instalação
 
 ```bash
-# Clonar o repositório
+# 1. Clonar o repositório
 git clone https://github.com/ilmoretto/unloque.git
 cd unloque
 
-# Instalar dependências
+# 2. Criar e ativar ambiente virtual (recomendado)
+python -m venv venv
+# Linux / macOS:
+source venv/bin/activate
+# Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
+
+# 3. Instalar dependências
 pip install -r requirements.txt
 ```
 
@@ -164,64 +214,65 @@ pip install -r requirements.txt
 
 ## Guia de Utilização
 
-### 1. Modo Linha de Comando (CLI)
+### 1. Modo Gráfico (Web GUI)
+
+Para inicializar o servidor local e abrir a interface gráfica automaticamente no navegador:
+
+```bash
+python unloque/main.py --gui
+# ou execute sem argumentos:
+python unloque/main.py
+```
+
+O painel estará acessível no endereço: **`http://127.0.0.1:5000`**
+
+---
+
+### 2. Modo Linha de Comando (CLI)
 
 ```bash
 # Execução padrão (utiliza todos os dicionários contidos na pasta wordlists/)
-python3 unloque/main.py examples/teste_matrix.zip
+python unloque/main.py examples/teste_matrix.zip
 
 # Especificando um arquivo ou diretório de wordlists
-python3 unloque/main.py examples/teste_matrix.zip wordlists/senhas_brasil.txt
-python3 unloque/main.py examples/teste_matrix.zip wordlists/
+python unloque/main.py examples/teste_matrix.zip wordlists/senhas_brasil.txt
+python unloque/main.py examples/teste_matrix.zip wordlists/
 ```
 
-#### Parâmetros de Execução:
+#### Parâmetros de Execução CLI:
 
-- `-v`, `--verbose`: Exibe detalhadamente cada senha testada em tempo real.
+- `-v`, `--verbose`: Exibe detalhadamente cada tentativa de senha linha a linha.
 - `-d`, `--delay`: Define um intervalo (em segundos) entre as tentativas para demonstrações e análises didáticas.
-- `-t`, `--threads`: Define manualmente a quantidade de workers paralelos.
+- `-t`, `--threads`: Define manualmente a quantidade de threads/workers paralelos.
+- `--gui`: Força a inicialização no modo Web GUI.
 
 ```bash
-# Demonstração com modo detalhado e intervalo de 0.05 segundos
-python3 unloque/main.py examples/teste_matrix.zip -v -d 0.05
+# Exemplo didático com modo detalhado e cadência de 0.05s
+python unloque/main.py examples/teste_matrix.zip -v -d 0.05
 ```
 
 ---
 
-### 2. Modo Gráfico (Web GUI)
+### 3. Geração de Amostras ZIP de Teste
 
-Para inicializar o servidor local e abrir a interface web no navegador:
-
-```bash
-python3 unloque/main.py --gui
-# ou execute sem argumentos:
-python3 unloque/main.py
-```
-
-Acesse o endereço local: `http://127.0.0.1:5000`
-
----
-
-### 3. Geração de Arquivos ZIP de Teste
-
-Para criar arquivos ZIP protegidos com senhas customizadas para testes:
+Para criar arquivos ZIP protegidos com senhas customizadas para testes práticos:
 
 ```bash
 # Gerar arquivos de teste padrão ('matrix' e 'secret2024')
-python3 examples/gerar_exemplos.py
+python examples/gerar_exemplos.py
 
 # Gerar arquivo com senha específica
-python3 examples/gerar_exemplos.py "senha_customizada" examples/teste_custom.zip
+python examples/gerar_exemplos.py "senha_customizada" examples/teste_custom.zip
 ```
 
 ---
 
 ## Testes Automatizados
 
-Para executar a suíte de testes unitários:
+A suíte de testes cobre o motor de processamento, o auditor de cabeçalhos, o profiler, o mutador e todos os endpoints da API REST:
 
 ```bash
-python3 -m unittest discover -s tests -v
+python -m unittest discover -s tests -v
 ```
 
 ---
@@ -230,27 +281,31 @@ python3 -m unittest discover -s tests -v
 
 ```
 unloque/
-├── README.md                    # Documentação técnica do projeto
-├── requirements.txt             # Declaração de dependências
+├── README.md                    # Documentação técnica e guia do projeto
+├── requirements.txt             # Declaração de dependências do Python
 ├── setup.py                     # Configuração de empacotamento
 ├── unloque/
-│   ├── main.py                  # Ponto de entrada unificado
-│   ├── cli.py                   # Interface de linha de comando
-│   ├── core/                    # Núcleo de processamento criptográfico
+│   ├── main.py                  # Ponto de entrada unificado (CLI / Web GUI)
+│   ├── cli.py                   # Interface de linha de comando e telemetria
+│   ├── core/                    # Núcleo criptográfico de alta performance
 │   │   ├── __init__.py
-│   │   ├── engine.py            # Motor ZipEngine e controle de threads
-│   │   ├── analyzer.py          # Analisador de cabeçalhos PKZIP
-│   │   ├── mutator.py           # Regras de mutação de termos
-│   │   ├── profiler.py          # Gerador contextual
-│   │   └── checkpoint.py        # Persistência de estado
-│   └── web/                     # Servidor Web Flask e assets da interface
-│       ├── app.py               # Configuração da aplicação Flask
-│       ├── routes.py            # Endpoints REST e fluxo SSE
-│       ├── INSTRUCOES.md        # Especificação técnica da API
+│   │   ├── engine.py            # Motor ZipEngine, paralelismo e eventos
+│   │   ├── analyzer.py          # Auditor de cabeçalhos PKZIP e cifras
+│   │   ├── profiler.py          # Gerador de wordlists contextuais (OSINT)
+│   │   ├── mutator.py           # Regras de mutação e expansão léxica
+│   │   └── checkpoint.py        # Gerenciamento e persistência de estado
+│   └── web/                     # Servidor Web Flask e frontend SPA
+│       ├── __init__.py
+│       ├── app.py               # Fábrica da aplicação Flask
+│       ├── routes.py            # Rotas REST e streaming SSE
+│       ├── README.md            # Especificação técnica dos contratos da API
 │       ├── static/              # Folhas de estilo e scripts frontend
-│       └── templates/           # Estrutura HTML da interface gráfica
-├── wordlists/                   # Bases de dicionários
-├── examples/                    # Utilitários de geração de amostras
+│       │   ├── css/style.css    # Estilização Dark SecOps
+│       │   └── js/app.js        # Lógica client-side e streaming SSE
+│       └── templates/
+│           └── index.html       # Estrutura HTML5 da interface gráfica
+├── wordlists/                   # Dicionários de senhas e PINs
+├── examples/                    # Amostras criptografadas e script gerador
 └── tests/                       # Testes automatizados com unittest
 ```
 
@@ -259,10 +314,36 @@ unloque/
 ## Autores
 
 - **Alencar Morete**
-- **Emily Chagas**   
+- **Emily Chagas**
 
 ---
 
 ## Licença
 
 Este projeto é distribuído sob a licença **MIT**. Consulte o arquivo `LICENSE` para mais detalhes.
+
+---
+
+## Aviso Legal e Diretrizes Éticas
+
+> [!CAUTION]
+> ### USO RESTRITO A FINS EDUCATIVOS E ACADÊMICOS
+> 
+> Esta ferramenta foi projetada, desenvolvida e disponibilizada estritamente para **fins educacionais, acadêmicos e de pesquisa em cibersegurança**.
+> 
+> A utilização deste software para recuperar senhas, auditar, tentar acessar, interceptar ou decifrar arquivos, dados ou sistemas de terceiros **sem a prévia, expressa e formal autorização do legítimo proprietário é expressamente proibida e configura crime**.
+> 
+> A violação de dispositivos e o acesso não autorizado a sistemas computacionais estão tipificados e sujeitos a rigorosas penalidades na legislação brasileira, incluindo, mas não se limitando a:
+> 
+> 1. **Lei nº 12.737/2012 (Lei dos Crimes Cibernéticos / "Lei Carolina Dieckmann")**:
+>    - Altera o Código Penal Brasileiro (Decreto-Lei nº 2.848/1940), tipificando no **Artigo 154-A** o crime de **Invasão de Dispositivo Informático**:
+>      > *"Invadir dispositivo informático de uso alheio, conectado ou não à rede de computadores, com ou sem violação indevida de mecanismo de segurança e a fim de obter, adulterar ou destruir dados ou informações sem autorização expressa ou tácita do usuário do dispositivo ou de instalar vulnerabilidades para obter vantagem ilícita."*
+>      > **Pena**: Reclusão, de 1 (um) a 4 (quatro) anos, e multa, podendo ser agravada para 2 (dois) a 5 (cinco) anos caso decorra na obtenção de conteúdo de comunicações eletrônicas privadas, segredos comerciais ou industriais, informações sigilosas.
+> 
+> 2. **Marco Civil da Internet (Lei nº 12.965/2014)**:
+>    - Estabelece os princípios, garantias, direitos e deveres para o uso da Internet no Brasil, assegurando a **inviolabilidade da intimidade e da vida privada, a inviolabilidade e o sigilo do fluxo de comunicações pela internet e das comunicações privadas armazenadas** (Art. 7º, incisos I, II e III).
+> 
+> 3. **Lei Geral de Proteção de Dados Pessoais - LGPD (Lei nº 13.709/2018)**:
+>    - Protege os direitos fundamentais de liberdade, privacidade e o livre desenvolvimento da personalidade da pessoa natural contra o tratamento e acesso ilícito a dados pessoais.
+> 
+> Os desenvolvedores, mantenedores e colaboradores deste repositório **isentam-se de qualquer responsabilidade civil ou penal** decorrente do uso inadequado, antiético, ilícito ou criminoso das ferramentas, técnicas e códigos disponibilizados neste projeto. O usuário assume total responsabilidade pelas suas ações e pela conformidade com as leis vigentes.
