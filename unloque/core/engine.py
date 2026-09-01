@@ -25,6 +25,7 @@ class ProgressStats:
     eta: float = 0.0
     found: bool = False
     password: Optional[str] = None
+    current_password: str = ""
     status: str = "idle"
     message: str = ""
 
@@ -94,12 +95,14 @@ class ZipEngine:
 
         return False
 
-    def _test_batch(self, passwords: List[str]) -> Optional[str]:
+    def _test_batch(self, passwords: List[str], on_test_cb: Optional[Callable[[str], None]] = None) -> Optional[str]:
         """Testa um lote de senhas sequencialmente."""
         for pwd in passwords:
             if self._stop_event.is_set():
                 return None
             self._pause_event.wait()
+            if on_test_cb:
+                on_test_cb(pwd)
             if self.test_password(pwd):
                 return pwd
         return None
@@ -169,7 +172,7 @@ class ZipEngine:
         wordlist: Union[str, Iterable[str]],
         workers: Optional[int] = None,
         callback: Optional[Callable[[ProgressStats], None]] = None,
-        chunk_size: int = 100
+        chunk_size: int = 20
     ) -> ProgressStats:
         """Executa a recuperação completa sobre a wordlist ou diretório."""
         for stats in self.crack_generator(wordlist, workers=workers, chunk_size=chunk_size):
@@ -183,7 +186,7 @@ class ZipEngine:
         self,
         wordlist: Union[str, Iterable[str]],
         workers: Optional[int] = None,
-        chunk_size: int = 100
+        chunk_size: int = 20
     ):
         """Gerador que executa a recuperação e emite eventos de progresso."""
         self._stop_event.clear()
@@ -200,15 +203,21 @@ class ZipEngine:
             yield ProgressStats(status="exhausted", message="Wordlist vazia.")
             return
 
-        workers = workers or min(32, (os.cpu_count() or 1) * 4)
+        workers = workers or min(16, (os.cpu_count() or 1) * 2)
         chunks = [passwords[i:i + chunk_size] for i in range(0, total, chunk_size)]
 
         tested = 0
         start_time = time.time()
-        found_password = None
+        last_tested_pwd = [""]
+
+        def on_test(pwd: str):
+            last_tested_pwd[0] = pwd
 
         with ThreadPoolExecutor(max_workers=workers) as executor:
-            future_to_chunk = {executor.submit(self._test_batch, chunk): chunk for chunk in chunks}
+            future_to_chunk = {
+                executor.submit(self._test_batch, chunk, on_test): chunk 
+                for chunk in chunks
+            }
 
             for future in as_completed(future_to_chunk):
                 chunk = future_to_chunk[future]
@@ -220,7 +229,6 @@ class ZipEngine:
 
                 result = future.result()
                 if result:
-                    found_password = result
                     self._stop_event.set()
                     yield ProgressStats(
                         tested=tested,
@@ -230,9 +238,10 @@ class ZipEngine:
                         elapsed=elapsed,
                         eta=0.0,
                         found=True,
-                        password=found_password,
+                        password=result,
+                        current_password=result,
                         status="found",
-                        message=f"Senha encontrada: {found_password}"
+                        message=f"Senha encontrada: {result}"
                     )
                     return
 
@@ -244,6 +253,7 @@ class ZipEngine:
                         percent=percent,
                         elapsed=elapsed,
                         eta=eta,
+                        current_password=last_tested_pwd[0],
                         status="stopped",
                         message="Processo interrompido pelo usuário."
                     )
@@ -256,6 +266,7 @@ class ZipEngine:
                     percent=percent,
                     elapsed=elapsed,
                     eta=eta,
+                    current_password=chunk[-1] if chunk else last_tested_pwd[0],
                     status="running" if self._pause_event.is_set() else "paused"
                 )
 
@@ -269,6 +280,7 @@ class ZipEngine:
             elapsed=elapsed,
             eta=0.0,
             found=False,
+            current_password=last_tested_pwd[0],
             status="exhausted",
             message="Wordlist esgotada. Senha não encontrada."
         )

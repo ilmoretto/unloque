@@ -4,16 +4,20 @@ Ferramenta modular de recuperação, auditoria criptográfica e geração contex
 
 ---
 
-## 🚀 Características Principais
+## 🚀 Uso Simplificado (Linha de Comando)
 
-- **Core Desacoplado**: Motor criptográfico multithread e multiprocessing puro sem dependência de interface gráfica.
-- **Suporte Criptográfico Completo**: Suporte a **ZipCrypto** e **WinZip AES** (AES-128, AES-192, AES-256).
-- **Varredura Flexível de Dicionários**: Suporta arquivos `.txt` individuais ou **diretórios inteiros** (ex: `wordlists/`) com desduplicação automática.
-- **Telemetria em Tempo Real**: Métricas instantâneas de velocidade (senhas/s), tempo decorrido, porcentagem e estimativa de término (ETA).
-- **Interface Dual**:
-  - **CLI**: Execução nativa no terminal com subcomandos (`crack`, `audit`, `profile`, `mutate`).
-  - **Web GUI**: Dashboard moderna com Dark Theme, Drag & Drop e streaming via Server-Sent Events (SSE).
-- **Auditoria de Segurança**: Análise detalhada de vulnerabilidades em cabeçalhos PKZIP.
+Você pode passar **apenas o arquivo ZIP** (o programa usará a pasta `wordlists/` por padrão) ou especificar um arquivo/pasta de dicionários:
+
+```bash
+# 1. Recuperação padrão com barra de progresso e senha atual em tempo real
+python3 unloque/main.py examples/teste_matrix.zip
+
+# 2. Modo Visual Detalhado (exibe cada senha testada linha a linha)
+python3 unloque/main.py examples/teste_matrix.zip -v
+
+# 3. Modo Demonstração ao Vivo em Aula (com delay para visualização clara no projetor)
+python3 unloque/main.py examples/teste_matrix.zip -v -d 0.05
+```
 
 ---
 
@@ -31,95 +35,23 @@ pip install -r requirements.txt
 ### 1. Gerar Arquivos ZIP de Teste
 Cria arquivos protegidos de exemplo na pasta `examples/` (inclui a senha `matrix` solicitada na disciplina):
 ```bash
+# Gera os arquivos padrão ('matrix' e 'secret2024')
 python3 examples/gerar_exemplos.py
+
+# Ou cria um ZIP de teste com a senha que você quiser:
+python3 examples/gerar_exemplos.py "minhasenha" examples/teste_custom.zip
 ```
 
----
-
 ### 2. Executar a Suíte de Testes Automatizados
-Roda todos os testes unitários do motor de recuperação:
+Roda todos os testes unitários do motor e da API:
 ```bash
 python3 -m unittest discover -s tests -v
 ```
 
----
-
-### 3. Recuperação de Senha com o Motor (`ZipEngine`)
-
-#### A. Usando uma Wordlist Específica
-```bash
-python3 -c "
-from unloque.core.engine import ZipEngine
-
-engine = ZipEngine('examples/teste_matrix.zip')
-result = engine.crack('wordlists/senhas_comuns.txt')
-
-print(f'Status:           {result.status}')
-print(f'Senha Encontrada: {result.password}')
-print(f'Tempo Decorrido:  {result.elapsed:.4f}s')
-print(f'Taxa de Teste:    {result.rate:.2f} senhas/s')
-"
-```
-
-#### B. Passando a Pasta `wordlists/` Inteira (Varredura Consolidada)
-```bash
-python3 -c "
-from unloque.core.engine import ZipEngine
-
-engine = ZipEngine('examples/teste_matrix.zip')
-result = engine.crack('wordlists/')
-
-print(f'Status:           {result.status}')
-print(f'Senha Encontrada: {result.password}')
-print(f'Total Testadas:   {result.tested}/{result.total}')
-print(f'Taxa de Teste:    {result.rate:.2f} senhas/s')
-"
-```
-
-#### C. Acompanhamento de Telemetria em Tempo Real
-```bash
-python3 -c "
-from unloque.core.engine import ZipEngine
-
-engine = ZipEngine('examples/teste_matrix.zip')
-for ev in engine.crack_generator('wordlists/', chunk_size=10):
-    print(f'[{ev.status.upper()}] Testadas: {ev.tested}/{ev.total} | {ev.percent:.1f}% | Taxa: {ev.rate:.1f} s/s')
-    if ev.found:
-        print(f'>>> SUCESSO! Senha: {ev.password}')
-"
-```
-
----
-
-### 4. Modo Linha de Comando (CLI)
-
-```bash
-# Recuperação de senha por arquivo ou pasta de wordlists
-python unloque/main.py crack -z examples/teste_matrix.zip -w wordlists/
-
-# Auditoria criptográfica de cabeçalhos PKZIP
-python unloque/main.py audit -z examples/teste_matrix.zip
-
-# Geração de wordlist contextual baseada em perfil
-python unloque/main.py profile -o custom_wordlist.txt
-
-# Mutação de senhas com regras inteligentes (leetspeak, anos, sufixos)
-python unloque/main.py mutate -i wordlists/senhas_comuns.txt -o mutadas.txt
-```
-
----
-
-### 5. Modo Gráfico (Web GUI)
-
+### 3. Modo Gráfico (Web GUI)
 Inicia o servidor local Flask e abre automaticamente o navegador padrão:
 ```bash
-python unloque/main.py
-# ou
-python unloque/main.py --gui
-```
-Ou para rodar apenas o servidor Flask de desenvolvimento:
-```bash
-python -m unloque.web.app
+python3 unloque/main.py --gui
 ```
 Acesse em: `http://127.0.0.1:5000`
 
@@ -138,7 +70,7 @@ unloque/
 │   │   ├── analyzer.py          # Auditor de cabeçalhos PKZIP
 │   │   ├── mutator.py           # Gerador de mutações de senha
 │   │   └── profiler.py          # Gerador contextual de wordlists
-│   ├── cli.py                   # Interface de linha de comando
+│   ├── cli.py                   # Interface de linha de comando simplificada
 │   ├── main.py                  # Ponto de entrada unificado
 │   └── web/                     # Servidor Web Flask e SPA
 ├── wordlists/                   # Dicionários prontos (senhas comuns, Brasil, PINs, Top500)
