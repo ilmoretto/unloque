@@ -2,7 +2,7 @@ import os
 import unittest
 import zipfile
 import tempfile
-import subprocess
+import pyzipper
 from unloque.core.engine import ZipEngine, ProgressStats
 
 class TestZipEngine(unittest.TestCase):
@@ -27,8 +27,10 @@ class TestZipEngine(unittest.TestCase):
         with open(txt_path, "w") as f:
             f.write("Conteudo secreto para teste.")
 
-        # Criar ZIP criptografado com senha 'matrix'
-        subprocess.run(["zip", "-P", "matrix", "-q", "-j", cls.matrix_zip, txt_path], check=True)
+        # Criar ZIP criptografado com senha 'matrix' usando pyzipper
+        with pyzipper.AESZipFile(cls.matrix_zip, "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES) as zf:
+            zf.setpassword(b"matrix")
+            zf.write(txt_path, arcname="file.txt")
 
         # Criar ZIP sem senha
         with zipfile.ZipFile(cls.plain_zip, "w") as zf:

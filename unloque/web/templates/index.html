@@ -3,20 +3,648 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unloque - Interface Web</title>
-    <!-- 
-      INSTRUÇÕES PARA O DESENVOLVEDOR DA INTERFACE:
-      Consulte 'unloque/web/INSTRUCOES.md' para a lista completa de rotas da API REST
-      (upload, audit, crack/start, pause, resume, stop) e formato dos eventos SSE (/api/crack/events).
-    -->
+    <title>Unloque - Recuperador & Auditoria Criptográfica ZIP</title>
+    <meta name="description" content="Ferramenta modular de alta performance para recuperação de senhas e auditoria criptográfica de arquivos ZIP.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div id="app">
-        <!-- Espaço reservado para a interface a ser desenvolvida -->
-        <h1>Unloque - Web GUI</h1>
-        <p>Consulte <code>unloque/web/INSTRUCOES.md</code> para integrar com o backend.</p>
+    <div class="layout-wrapper">
+        <!-- Top Navigation Bar -->
+        <header class="navbar">
+            <div class="navbar-brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" width="26" height="26" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">UNLOQUE</span>
+                    <span class="brand-badge">v2.0 PRO</span>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="nav-tabs">
+                <button class="tab-btn active" data-tab="tab-cracker">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                    </svg>
+                    <span>Recuperador</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-analyzer">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                    <span>Auditoria Criptográfica</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-profiler">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Profiler Contextual</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-mutator">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span>Mutador de Senhas</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-library">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    <span>Biblioteca & Exemplos</span>
+                </button>
+            </nav>
+
+            <!-- Status Indicator -->
+            <div class="navbar-status">
+                <span class="status-dot ready" id="global-status-dot"></span>
+                <span class="status-label" id="global-status-text">Pronto</span>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- TAB 1: RECUPERADOR (CRACKER) -->
+            <section id="tab-cracker" class="tab-pane active">
+                <div class="cracker-grid">
+                    <!-- Left Column: Attack Configuration -->
+                    <div class="card config-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                </svg>
+                                Configuração do Ataque
+                            </h2>
+                            <span class="card-subtitle">Selecione o arquivo alvo e o dicionário de senhas</span>
+                        </div>
+
+                        <!-- Target ZIP Dropzone -->
+                        <div class="form-group">
+                            <label class="form-label">Arquivo ZIP Alvo <span class="required">*</span></label>
+                            <div class="dropzone" id="zip-dropzone">
+                                <input type="file" id="zip-file-input" accept=".zip" class="file-input">
+                                <div class="dropzone-content" id="zip-dropzone-empty">
+                                    <div class="dropzone-icon">
+                                        <svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="1.8" fill="none">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="dropzone-text">
+                                        <span class="dropzone-main-text">Arraste o arquivo <strong>.ZIP</strong> aqui</span>
+                                        <span class="dropzone-sub-text">ou clique para procurar no seu computador</span>
+                                    </div>
+                                </div>
+                                <div class="file-selected-box hidden" id="zip-selected-box">
+                                    <div class="file-info-main">
+                                        <span class="file-badge">ZIP</span>
+                                        <div class="file-meta">
+                                            <span class="file-name" id="selected-zip-name">arquivo.zip</span>
+                                            <span class="file-size" id="selected-zip-size">0 KB</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-icon" id="btn-remove-zip" title="Remover arquivo">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Quick Examples Selector -->
+                            <div class="quick-select-row">
+                                <span class="quick-label">Ou escolha um exemplo:</span>
+                                <select id="select-zip-example" class="form-select-sm">
+                                    <option value="">-- Selecionar arquivo de teste --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Wordlist Strategy Selector -->
+                        <div class="form-group">
+                            <label class="form-label">Estratégia de Wordlist <span class="required">*</span></label>
+                            <div class="radio-cards-grid">
+                                <label class="radio-card">
+                                    <input type="radio" name="wordlist-source" value="all_wordlists" checked>
+                                    <div class="radio-card-body">
+                                        <span class="radio-title">Todas as Wordlists</span>
+                                        <span class="radio-desc">Consolida todos os dicionários em <code>wordlists/</code></span>
+                                    </div>
+                                </label>
+                                <label class="radio-card">
+                                    <input type="radio" name="wordlist-source" value="server_file">
+                                    <div class="radio-card-body">
+                                        <span class="radio-title">Dicionário do Servidor</span>
+                                        <span class="radio-desc">Escolha uma lista específica pré-instalada</span>
+                                    </div>
+                                </label>
+                                <label class="radio-card">
+                                    <input type="radio" name="wordlist-source" value="custom_upload">
+                                    <div class="radio-card-body">
+                                        <span class="radio-title">Upload de Wordlist (.txt)</span>
+                                        <span class="radio-desc">Envie seu próprio arquivo de termos</span>
+                                    </div>
+                                </label>
+                                <label class="radio-card" id="radio-card-generated" style="display:none;">
+                                    <input type="radio" name="wordlist-source" value="generated_pool">
+                                    <div class="radio-card-body">
+                                        <span class="radio-title">Wordlist Gerada</span>
+                                        <span class="radio-desc" id="generated-pool-count">0 termos gerados</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Wordlist Dynamic Dropdown / Upload Container -->
+                            <div id="container-server-wordlist" class="sub-form-container hidden">
+                                <label class="sub-label">Escolha a Wordlist do Servidor:</label>
+                                <select id="select-server-wordlist" class="form-select">
+                                    <option value="">Carregando wordlists...</option>
+                                </select>
+                            </div>
+
+                            <div id="container-custom-upload" class="sub-form-container hidden">
+                                <div class="dropzone small-dropzone" id="wordlist-dropzone">
+                                    <input type="file" id="wordlist-file-input" accept=".txt" class="file-input">
+                                    <div class="dropzone-content" id="wordlist-dropzone-empty">
+                                        <span class="dropzone-sub-text">Arraste ou clique para enviar um arquivo <strong>.txt</strong></span>
+                                    </div>
+                                    <div class="file-selected-box hidden" id="wordlist-selected-box">
+                                        <div class="file-info-main">
+                                            <span class="file-badge badge-txt">TXT</span>
+                                            <div class="file-meta">
+                                                <span class="file-name" id="selected-wordlist-name">lista.txt</span>
+                                                <span class="file-size" id="selected-wordlist-size">0 KB</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn-icon" id="btn-remove-wordlist" title="Remover">
+                                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Engine Settings -->
+                        <div class="form-group settings-box">
+                            <div class="setting-row">
+                                <div class="setting-info">
+                                    <span class="setting-title">Threads Paralelas (Workers)</span>
+                                    <span class="setting-desc">Ajuste a quantidade de threads multi-core</span>
+                                </div>
+                                <div class="slider-wrapper">
+                                    <input type="range" id="slider-workers" min="1" max="16" value="8" class="form-slider">
+                                    <span class="slider-val" id="val-workers">8</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-info">
+                                    <span class="setting-title">Mutações Heurísticas</span>
+                                    <span class="setting-desc">Aplica leetspeak, sufixos e variações de caixa automaticamente</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="toggle-mutations">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Action Control Buttons -->
+                        <div class="actions-row">
+                            <button type="button" class="btn btn-primary btn-large" id="btn-start-crack">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                                <span>Iniciar Recuperação</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btn-pause-crack" disabled>
+                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                    <rect x="6" y="4" width="4" height="16"></rect>
+                                    <rect x="14" y="4" width="4" height="16"></rect>
+                                </svg>
+                                <span>Pausar</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary hidden" id="btn-resume-crack">
+                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                                <span>Retomar</span>
+                            </button>
+                            <button type="button" class="btn btn-danger" id="btn-stop-crack" disabled>
+                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                </svg>
+                                <span>Parar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Real-time Telemetry & Terminal -->
+                    <div class="telemetry-column">
+                        <!-- Telemetry Stats Cards -->
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <span class="stat-label">Progresso</span>
+                                <span class="stat-value" id="stat-percent">0.0%</span>
+                                <div class="stat-meta" id="stat-status-text">Aguardando início</div>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Taxa de Teste</span>
+                                <span class="stat-value highlight-cyan" id="stat-rate">0 /s</span>
+                                <div class="stat-meta">senhas por segundo</div>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Testadas / Total</span>
+                                <span class="stat-value" id="stat-tested">0 / 0</span>
+                                <div class="stat-meta" id="stat-remaining">0 restantes</div>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Tempo Decorrido</span>
+                                <span class="stat-value" id="stat-elapsed">00:00.0</span>
+                                <div class="stat-meta" id="stat-eta">ETA: --:--</div>
+                            </div>
+                        </div>
+
+                        <!-- Main Animated Progress Bar -->
+                        <div class="card progress-card">
+                            <div class="progress-info-row">
+                                <span class="progress-title">Progresso da Recuperação</span>
+                                <span class="progress-percentage" id="progress-bar-label">0.0%</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="progress-bar-fill" style="width: 0%;"></div>
+                            </div>
+                            <div class="current-word-box">
+                                <span class="current-word-label">Senha em Teste:</span>
+                                <span class="current-word-val" id="current-tested-password">---</span>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Terminal Console -->
+                        <div class="card terminal-card">
+                            <div class="terminal-header">
+                                <div class="terminal-dots">
+                                    <span class="dot red"></span>
+                                    <span class="dot yellow"></span>
+                                    <span class="dot green"></span>
+                                </div>
+                                <div class="terminal-title">LOG DE EVENTOS EM TEMPO REAL</div>
+                                <div class="terminal-actions">
+                                    <button type="button" class="btn-text-sm" id="btn-clear-logs">Limpar</button>
+                                </div>
+                            </div>
+                            <div class="terminal-body" id="terminal-logs">
+                                <div class="log-line info">[00:00:00] [*] Unloque Web GUI inicializado com sucesso.</div>
+                                <div class="log-line info">[00:00:00] [*] Conecte um arquivo ZIP e selecione um dicionário para iniciar.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: AUDITORIA CRIPTOGRÁFICA (ANALYZER) -->
+            <section id="tab-analyzer" class="tab-pane">
+                <div class="card analyzer-main-card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                            Auditoria de Cabeçalhos PKZIP & Análise de Cifra
+                        </h2>
+                        <span class="card-subtitle">Inspecione a estrutura binária, assinaturas de cifragem e vulnerabilidades estruturais</span>
+                    </div>
+
+                    <div class="analyzer-action-bar">
+                        <button type="button" class="btn btn-primary" id="btn-run-audit">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <span>Executar Auditoria Criptográfica</span>
+                        </button>
+                        <span class="analyzer-target-note" id="analyzer-target-display">Arquivo alvo atual: Nenhum selecionado</span>
+                    </div>
+
+                    <!-- Audit Results Display -->
+                    <div id="audit-results-container" class="audit-results hidden">
+                        <!-- Summary Badges Grid -->
+                        <div class="audit-summary-grid">
+                            <div class="audit-badge-card">
+                                <span class="badge-label">Algoritmo de Cifragem</span>
+                                <span class="badge-value highlight-cyan" id="audit-encryption-type">WinZip AES-256</span>
+                            </div>
+                            <div class="audit-badge-card">
+                                <span class="badge-label">Nível de Vulnerabilidade</span>
+                                <span class="badge-value" id="audit-vulnerability-level">BAIXO</span>
+                            </div>
+                            <div class="audit-badge-card">
+                                <span class="badge-label">Entradas no Arquivo</span>
+                                <span class="badge-value" id="audit-entries-count">0 itens</span>
+                            </div>
+                            <div class="audit-badge-card">
+                                <span class="badge-label">Protegido por Senha</span>
+                                <span class="badge-value highlight-green" id="audit-is-encrypted">SIM</span>
+                            </div>
+                        </div>
+
+                        <!-- Technical Recommendation Alert -->
+                        <div class="alert-box alert-recommendation" id="audit-recommendation-box">
+                            <div class="alert-icon">
+                                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                            </div>
+                            <div class="alert-content">
+                                <span class="alert-title">Parecer Técnico & Vetor de Ataque Recomendado:</span>
+                                <p class="alert-text" id="audit-recommendation-text"></p>
+                            </div>
+                        </div>
+
+                        <!-- Internal Files Table -->
+                        <div class="table-container">
+                            <h3 class="table-title">Arquivos e Diretórios Internos Inspecionados</h3>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome do Arquivo</th>
+                                        <th>Tamanho Original</th>
+                                        <th>Tamanho Comprimido</th>
+                                        <th>Criptografado</th>
+                                        <th>Cifra / Método</th>
+                                        <th>Checksum CRC-32</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="audit-files-table-body">
+                                    <!-- Populated dynamically via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="analyzer-footer-actions">
+                            <button type="button" class="btn btn-secondary" id="btn-use-audited-in-cracker">
+                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                                <span>Carregar este arquivo no Recuperador</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: PROFILER CONTEXTUAL -->
+            <section id="tab-profiler" class="tab-pane">
+                <div class="profiler-grid">
+                    <div class="card profiler-form-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                Gerador de Wordlist por Engenharia Social
+                            </h2>
+                            <span class="card-subtitle">Crie dicionários contextuais direcionados baseados em dados de inteligência (OSINT)</span>
+                        </div>
+
+                        <form id="form-profiler" class="form-layout">
+                            <div class="form-row-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="prof-name">Nome do Alvo</label>
+                                    <input type="text" id="prof-name" class="form-input" placeholder="Ex: Lucas, Amanda, Admin">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="prof-surname">Sobrenome</label>
+                                    <input type="text" id="prof-surname" class="form-input" placeholder="Ex: Silva, Santos, Rocha">
+                                </div>
+                            </div>
+                            <div class="form-row-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="prof-year">Ano de Nascimento / Fundação</label>
+                                    <input type="text" id="prof-year" class="form-input" placeholder="Ex: 1995, 2002">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="prof-keywords">Palavras-chave Contextuais (separadas por vírgula)</label>
+                                    <input type="text" id="prof-keywords" class="form-input" placeholder="Ex: financeiro, ifro, flamengo, secret">
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="btn-generate-profile">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg>
+                                    <span>Gerar Dicionário Contextual</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Profiler Results Card -->
+                    <div class="card profiler-results-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Resultado da Geração</h3>
+                            <span class="card-subtitle" id="prof-results-count">0 termos gerados</span>
+                        </div>
+                        <div class="words-preview-box" id="prof-words-preview">
+                            <span class="empty-state-text">Preencha os campos ao lado e clique em "Gerar Dicionário" para visualizar os termos.</span>
+                        </div>
+                        <div class="profiler-footer-actions">
+                            <button type="button" class="btn btn-secondary" id="btn-use-profiler-in-cracker" disabled>
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <span>Usar no Recuperador</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btn-download-profiler-txt" disabled>
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                <span>Baixar .TXT</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: MUTADOR DE SENHAS -->
+            <section id="tab-mutator" class="tab-pane">
+                <div class="mutator-grid">
+                    <div class="card mutator-form-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                </svg>
+                                Motor de Mutações & Expansão Léxica
+                            </h2>
+                            <span class="card-subtitle">Aplique regras de transformação estrutural sobre uma lista de termos base</span>
+                        </div>
+
+                        <form id="form-mutator" class="form-layout">
+                            <div class="form-group">
+                                <label class="form-label" for="mut-base-words">Palavras Base (uma por linha)</label>
+                                <textarea id="mut-base-words" class="form-textarea" rows="5" placeholder="admin&#10;matrix&#10;secret&#10;teste&#10;flamengo"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Regras de Transformação a Aplicar</label>
+                                <div class="checkbox-grid">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="rule-leetspeak" checked>
+                                        <span>Leetspeak (a→4/@, e→3, i→1, o→0, s→5/$)</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="rule-years" checked>
+                                        <span>Anos e Datas (2020-2026, 1990-2000)</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="rule-suffixes" checked>
+                                        <span>Sufixos Especiais (!, @, #, $, 123, !@#)</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="rule-prefixes" checked>
+                                        <span>Prefixos Comuns (#, @, !, _)</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="rule-casing" checked>
+                                        <span>Variação de Caixa (UPPER, lower, Capitalize)</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="rule-reverse">
+                                        <span>Inversão de Texto (reverse)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="btn-generate-mutations">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg>
+                                    <span>Gerar Mutações</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Mutator Results Card -->
+                    <div class="card mutator-results-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Resultado das Mutações</h3>
+                            <span class="card-subtitle" id="mut-results-count">0 termos mutados</span>
+                        </div>
+                        <div class="words-preview-box" id="mut-words-preview">
+                            <span class="empty-state-text">Insira palavras base e clique em "Gerar Mutações" para visualizar os termos gerados.</span>
+                        </div>
+                        <div class="profiler-footer-actions">
+                            <button type="button" class="btn btn-secondary" id="btn-use-mutator-in-cracker" disabled>
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <span>Usar no Recuperador</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btn-download-mutator-txt" disabled>
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                <span>Baixar .TXT</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: BIBLIOTECA & EXEMPLOS -->
+            <section id="tab-library" class="tab-pane">
+                <div class="library-grid">
+                    <!-- Available Wordlists Card -->
+                    <div class="card library-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                </svg>
+                                Wordlists Pré-Instaladas no Servidor
+                            </h2>
+                            <span class="card-subtitle">Dicionários disponíveis localmente na pasta <code>wordlists/</code></span>
+                        </div>
+                        <div class="library-list" id="library-wordlists-list">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Available Example ZIPs Card -->
+                    <div class="card library-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                </svg>
+                                Arquivos ZIP de Teste & Demonstração
+                            </h2>
+                            <span class="card-subtitle">Amostras criptografadas disponíveis na pasta <code>examples/</code></span>
+                        </div>
+                        <div class="library-list" id="library-examples-list">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
+
+    <!-- Success Modal Overlay -->
+    <div class="modal-overlay hidden" id="success-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-success-icon">
+                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="#10b981" stroke-width="2.5" fill="none">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <h2 class="modal-title">Senha Encontrada com Sucesso!</h2>
+                <span class="modal-subtitle">O arquivo ZIP foi descriptografado pelo Unloque</span>
+            </div>
+            <div class="modal-body">
+                <div class="password-found-box">
+                    <span class="password-label">SENHA RECUPERADA:</span>
+                    <div class="password-display-row">
+                        <span class="password-text" id="modal-password-text">******</span>
+                        <button type="button" class="btn btn-copy" id="btn-copy-password" title="Copiar Senha">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span>Copiar</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-stats-grid">
+                    <div class="modal-stat-item">
+                        <span class="modal-stat-label">Tempo Decorrido</span>
+                        <span class="modal-stat-value" id="modal-time-text">0.0s</span>
+                    </div>
+                    <div class="modal-stat-item">
+                        <span class="modal-stat-label">Tentativas Realizadas</span>
+                        <span class="modal-stat-value" id="modal-tested-text">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btn-close-modal">Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
