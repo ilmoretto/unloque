@@ -1,7 +1,0 @@
-admin
-empresa
-sistema
-root
-financeiro
-suporte
-diretoria
